@@ -1,11 +1,11 @@
 import http
 import json
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional, Tuple
 
 
 class Request:
 
-    def __init__(self, method_name: str, args: List[Any], kwargs: Dict[str: Any]):
+    def __init__(self, method_name: str, args: Tuple[Any, ...], kwargs: dict):
         self.method_name = method_name
         self.args = args
         self.kwargs = kwargs
@@ -18,7 +18,7 @@ class Request:
         return Request(
             method_name=request_dict['method_name'],
             args=request_dict.get('args', []),
-            kwargs = request_dict.get('kwargs', {})
+            kwargs=request_dict.get('kwargs', {})
         )
 
     def serialize(self):
@@ -27,7 +27,10 @@ class Request:
 
 class Response:
 
-    def __init__(self, result: Optional[Any], status: int=http.HTTPStatus.OK, exception: Optional[Exception] = None):
+    def __init__(self,
+                 result: Optional[Any],
+                 status: int = http.HTTPStatus.OK,
+                 exception: Optional[Exception] = None):
         self.result = result
         self.status = status
         self.exception = exception

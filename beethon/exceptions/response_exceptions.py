@@ -1,0 +1,4 @@
+
+
+class ThereIsNoSuchService(Exception):
+    pass

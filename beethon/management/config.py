@@ -1,16 +1,13 @@
 from typing import List, Type, Optional
 
+from beethon.exceptions.response_exceptions import ThereIsNoSuchService
 from beethon.handlers.base import Handler
 from beethon.handlers.dummy import DummyHandler
 from beethon.services.base import Service
+from beethon.utils.singleton import MetaSingleton
 
 
-class BeethonConfig:
-
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(BeethonConfig, cls).__new__(cls)
-        return cls.instance
+class BeethonConfig(metaclass=MetaSingleton):
 
     def __init__(self):
         self.__handlers = []    # type: List[Handler]
@@ -18,6 +15,13 @@ class BeethonConfig:
 
     def __iter__(self):
         return self.__handlers.__iter__()
+
+    def get_service_by_name(self, name: str) -> Service:
+        for handler in self:
+            service = handler.get_service()
+            if name == getattr(type(service), 'name', None):
+                return service
+        raise ThereIsNoSuchService
 
     def register(self, service_class: Type, handler_class: Optional[Type]):
         if handler_class is None:

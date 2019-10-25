@@ -1,4 +1,5 @@
+from beethon.utils.singleton import MetaSingleton
 
 
-class Service:
-    pass
+class Service(metaclass=MetaSingleton):
+    name = ''
