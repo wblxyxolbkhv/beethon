@@ -23,5 +23,5 @@ class FilmsService(Service):
 class FilmsServiceInterface:
 
     def get_all_films(self):
-        client = DummyClient()
-        return client.call(service_name='FilmsService', method_name='get_all_films')
+        client = DummyClient(service_name='FilmsService')
+        return client.call(method_name='get_all_films')

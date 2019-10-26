@@ -10,7 +10,7 @@ from beethon.services.base import Service
 class Handler(ABC):
 
     def __init__(self, service: Service):
-        self.__service = service
+        self._service = service
 
     @abstractmethod
     def run(self):
@@ -26,7 +26,7 @@ class Handler(ABC):
         exc: Optional[Exception] = None
 
         try:
-            service_method = getattr(self.__service, request.method_name, None)
+            service_method = getattr(self._service, request.method_name, None)
             result = service_method(*request.args, **request.kwargs)
         except AttributeError as e:
             exc = e
@@ -38,7 +38,7 @@ class Handler(ABC):
         return Response(result=result, status=status, exception=exc)
 
     def get_service(self) -> Service:
-        return self.__service
+        return self._service
 
 
 class HandlerRunThread(Thread):
