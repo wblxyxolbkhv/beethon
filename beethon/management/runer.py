@@ -1,3 +1,6 @@
+import asyncio
+from asyncio import Future
+from concurrent.futures.thread import ThreadPoolExecutor
 from typing import List
 
 from beethon.handlers.base import HandlerRunThread
@@ -24,3 +27,36 @@ class BeethonRunner:
     def stop(self):
         for thread in self.threads:
             thread.stop()
+
+
+class AsyncBeethonRunner:
+
+    def __init__(self):
+        self.config = BeethonConfig()
+        self._run_tasks: List[Future] = []
+
+        self.run_future = None
+
+    def run(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self._run())
+        loop.close()
+
+    def run_async(self):
+        executor = ThreadPoolExecutor(max_workers=2)
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(executor, self.run)
+
+    async def _run(self):
+        self._run_tasks = []
+        for handler in self.config:
+            self._run_tasks.append(handler.run())
+
+        await asyncio.gather(*self._run_tasks)
+
+    def stop(self):
+        for task in self._run_tasks:
+            task.cancel()
+
+
+

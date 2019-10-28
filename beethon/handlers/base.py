@@ -1,4 +1,5 @@
 import http
+import inspect
 from abc import ABC, abstractmethod
 from threading import Thread
 from typing import Optional
@@ -20,14 +21,20 @@ class Handler(ABC):
     def stop(self):
         raise NotImplementedError('stop() method of handler must be implemented in children')
 
-    def _on_new_request(self, request: Request) -> Response:
+    def is_async(self) -> bool:
+        return inspect.iscoroutinefunction(self.run)
+
+    async def _on_new_request(self, request: Request) -> Response:
         result = None
         status = http.HTTPStatus.OK
         exc: Optional[Exception] = None
 
         try:
             service_method = getattr(self._service, request.method_name, None)
-            result = service_method(*request.args, **request.kwargs)
+            if self.is_async():
+                result = await service_method(*request.args, **request.kwargs)
+            else:
+                result = service_method(*request.args, **request.kwargs)
         except AttributeError as e:
             exc = e
             status = http.HTTPStatus.BAD_REQUEST

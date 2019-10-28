@@ -1,10 +1,12 @@
+import asyncio
 import json
 import os
 import uuid
+from time import sleep
 from typing import Optional, Any, Tuple, Dict
 
-import amqp     # type: ignore
-from amqp import Connection, Channel, Message
+import aio_pika
+from aio_pika import Message
 
 from beethon.client.base import Client
 from beethon.exceptions.response_exceptions import ThereIsNoSuchService
@@ -13,15 +15,20 @@ from beethon.messages.base import Request, Response
 
 class AMQPClient(Client):
 
-    def __init__(self, service_name: str):
+    def __init__(self, service_name: str, timeout: int = 10):
         super().__init__(service_name=service_name)
-        amqp_host, amqp_user, amqp_pass = self._get_settings()
-        self.connection = Connection(host=amqp_host,
-                                     userid=amqp_user,
-                                     password=amqp_pass)
-        self.channel = Channel(self.connection)
+        self.timeout = timeout
+
+        self.connection: Optional[aio_pika.Connection] = None
+        self.channel: Optional[aio_pika.Channel] = None
+        self.queue: Optional[aio_pika.Queue] = None
+
+        self.loop = asyncio.get_event_loop()
 
         self._responses: Dict[str, Response] = {}
+        self.connected = False
+
+        self.queue_name = self.service_name
 
     def _get_settings(self) -> Tuple[str, str, str]:
         host = os.environ.get('AMQP_HOST', 'localhost:5672')
@@ -30,27 +37,49 @@ class AMQPClient(Client):
 
         return host, user, password
 
-    def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+    async def _connect(self):
+        amqp_host, amqp_user, amqp_pass = self._get_settings()
+        self.connection = await aio_pika.connect_robust(
+            "amqp://{}:{}@{}/".format(amqp_user, amqp_pass, amqp_host),
+            loop=self.loop
+        )
+        self.channel = await self.connection.channel()
+        self.queue = await self.channel.declare_queue(
+            self.queue_name,
+            auto_delete=False
+        )
+
+        self.connected = True
+
+    async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+        return await asyncio.wait_for(self._call(method_name, *args, **kwargs), timeout=self.timeout)
+
+    async def _call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+        if not self.connected:
+            await self._connect()
+
         request = Request(method_name=method_name, args=args, kwargs=kwargs)
         correlation_id = uuid.uuid4().hex
-        message = Message(body=request.serialize(), correlation_id=correlation_id)
-        self.channel.open()
-        self.channel.basic_publish(msg=message)
+        message = Message(body=request.serialize().encode(), correlation_id=correlation_id)
+        await self.channel.default_exchange.publish(message=message, routing_key=self.queue_name)
 
-        def wait_response(msg: Message):
-            if msg.properties['correlation_id'] == correlation_id:
+        async with self.queue.iterator() as queue_iter:
+            # Cancel consuming after __aexit__
+            async for msg in queue_iter:
                 response_dict = json.loads(msg.body)
-                exc = None
-                if response_dict.get('exception'):
-                    exc = Exception('')
-                self._responses[correlation_id] = Response(
-                    result=response_dict['result'],
-                    status=int(response_dict['status']),
-                    exception=exc
-                )
-                self.channel.close()
-        try:
-            self.channel.basic_consume(queue=self.service_name, callback=wait_response)
-        except amqp.exceptions.NotFound:
-            raise ThereIsNoSuchService()
-        return self.process_response(self._responses.pop(correlation_id))
+                if msg.correlation_id == correlation_id and response_dict.get('message_type') == 'response':
+                    async with msg.process():
+                        exc = None
+                        if response_dict.get('exception'):
+                            exc = Exception('')
+                        response = Response(
+                            result=response_dict['result'],
+                            status=int(response_dict['status']),
+                            exception=exc
+                        )
+                        break
+
+        return self.process_response(response)
+
+    async def stop(self):
+        await self.channel.close()

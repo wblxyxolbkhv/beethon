@@ -9,6 +9,7 @@ class Request:
         self.method_name = method_name
         self.args = args
         self.kwargs = kwargs
+        self.message_type = 'request'
 
     @classmethod
     def parse(cls, json_request: str) -> 'Request':
@@ -34,6 +35,7 @@ class Response:
         self.result = result
         self.status = status
         self.exception = exception
+        self.message_type = 'response'
 
     @property
     def success(self):
@@ -44,11 +46,12 @@ class Response:
         response_dict = {
             'result': getattr(self.result, '__dict__', None),
             'status': self.status,
+            'message_type': self.message_type
         }
         if self.exception is not None:
             exc_dict = {
                 'class': str(type(self.exception)),
-                'message': self.exception.message
+                'message': str(self.exception)
             }
             response_dict['exception'] = exc_dict
 
