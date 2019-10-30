@@ -30,7 +30,9 @@ class Handler(ABC):
         exc: Optional[Exception] = None
 
         try:
-            service_method = getattr(self._service, request.method_name, None)
+            service_method = getattr(self._service, request.method_name)
+            if service_method is None:
+                raise AttributeError()
             if self.is_async():
                 result = await service_method(*request.args, **request.kwargs)
             else:

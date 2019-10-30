@@ -62,6 +62,8 @@ class AMQPHandler(Handler):
                 async for message in queue_iter:
                     request_body = json.loads(message.body)
                     if request_body.get('message_type') != 'request':
+                        print('Handler got and ignore response')
+                        message.reject(requeue=True)
                         continue
                     async with message.process():
                         await self._on_amqp_message(msg=message)

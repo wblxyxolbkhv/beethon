@@ -1,25 +1,10 @@
-from threading import Thread
-from unittest import TestCase
-
 import beethon
 
 
-class BeethonRunThread(Thread):
+class BaseBeethonTestCase:
 
-    def run(self) -> None:
-        beethon.run()
+    def setup(self) -> None:
+        beethon.run_async()
 
-    def stop(self) -> None:
+    def teardown(self) -> None:
         beethon.stop()
-
-
-class BaseBeethonTestCase(TestCase):
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.thread = BeethonRunThread()
-        self.thread.start()
-
-    def tearDown(self) -> None:
-        super().tearDown()
-        self.thread.stop()

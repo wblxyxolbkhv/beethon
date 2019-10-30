@@ -20,13 +20,12 @@ class AMQPClient(Client):
         self.timeout = timeout
 
         self.connection: Optional[aio_pika.Connection] = None
-        self.channel: Optional[aio_pika.Channel] = None
-        self.queue: Optional[aio_pika.Queue] = None
+        # self.channel: Optional[aio_pika.Channel] = None
+        # self.queue: Optional[aio_pika.Queue] = None
 
         self.loop = asyncio.get_event_loop()
 
         self._responses: Dict[str, Response] = {}
-        self.connected = False
 
         self.queue_name = self.service_name
 
@@ -37,37 +36,34 @@ class AMQPClient(Client):
 
         return host, user, password
 
-    async def _connect(self):
+    async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+        return await asyncio.wait_for(self._call(method_name, *args, **kwargs), timeout=self.timeout)
+
+    async def _call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
         amqp_host, amqp_user, amqp_pass = self._get_settings()
         self.connection = await aio_pika.connect_robust(
             "amqp://{}:{}@{}/".format(amqp_user, amqp_pass, amqp_host),
             loop=self.loop
         )
-        self.channel = await self.connection.channel()
-        self.queue = await self.channel.declare_queue(
-            self.queue_name,
-            auto_delete=False
-        )
 
-        self.connected = True
+        async with self.connection:
+            channel = await self.connection.channel()
+            queue = await channel.declare_queue(
+                self.queue_name,
+                auto_delete=False
+            )
+            request = Request(method_name=method_name, args=args, kwargs=kwargs)
+            correlation_id = uuid.uuid4().hex
+            message = Message(body=request.serialize().encode(), correlation_id=correlation_id)
+            await channel.default_exchange.publish(message=message, routing_key=self.queue_name)
 
-    async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
-        return await asyncio.wait_for(self._call(method_name, *args, **kwargs), timeout=self.timeout)
-
-    async def _call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
-        if not self.connected:
-            await self._connect()
-
-        request = Request(method_name=method_name, args=args, kwargs=kwargs)
-        correlation_id = uuid.uuid4().hex
-        message = Message(body=request.serialize().encode(), correlation_id=correlation_id)
-        await self.channel.default_exchange.publish(message=message, routing_key=self.queue_name)
-
-        async with self.queue.iterator() as queue_iter:
-            # Cancel consuming after __aexit__
-            async for msg in queue_iter:
-                response_dict = json.loads(msg.body)
-                if msg.correlation_id == correlation_id and response_dict.get('message_type') == 'response':
+            async with queue.iterator() as queue_iter:
+                async for msg in queue_iter:
+                    response_dict = json.loads(msg.body)
+                    if msg.correlation_id != correlation_id or response_dict.get('message_type') != 'response':
+                        print('Got and ignored message')
+                        msg.reject(requeue=True)
+                        continue
                     async with msg.process():
                         exc = None
                         if response_dict.get('exception'):
@@ -79,7 +75,7 @@ class AMQPClient(Client):
                         )
                         break
 
-        return self.process_response(response)
+            return self.process_response(response)
 
     async def stop(self):
-        await self.channel.close()
+        pass

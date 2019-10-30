@@ -13,7 +13,7 @@ class RatesService(Service):
     def __init__(self):
         self.repo = RatesRepository()
 
-    def rate_film(self, film_id: int, rating: int):
+    async def rate_film(self, film_id: int, rating: int):
         rate = self.repo.get_rate(film_id=film_id)
         new_rate = Rate(film_id=film_id, rate=rating)
         if rate is None:
@@ -21,5 +21,5 @@ class RatesService(Service):
         else:
             self.repo.update_rate(new_rate)
 
-    def get_rate(self, film_id: int) -> Rate:
+    async def get_rate(self, film_id: int) -> Rate:
         return self.repo.get_rate(film_id)
