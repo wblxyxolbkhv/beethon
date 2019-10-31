@@ -9,17 +9,20 @@ from beethon.services.base import Service
 
 
 class Handler(ABC):
-
     def __init__(self, service: Service):
         self._service = service
 
     @abstractmethod
     def run(self):
-        raise NotImplementedError('run() method of handler must be implemented in children')
+        raise NotImplementedError(
+            "run() method of handler must be implemented in children"
+        )
 
     @abstractmethod
     def stop(self):
-        raise NotImplementedError('stop() method of handler must be implemented in children')
+        raise NotImplementedError(
+            "stop() method of handler must be implemented in children"
+        )
 
     def is_async(self) -> bool:
         return inspect.iscoroutinefunction(self.run)

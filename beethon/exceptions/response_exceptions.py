@@ -1,5 +1,3 @@
-
-
 class ThereIsNoSuchService(Exception):
     pass
 

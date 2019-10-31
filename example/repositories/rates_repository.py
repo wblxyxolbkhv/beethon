@@ -4,7 +4,6 @@ from example.models.rate import Rate
 
 
 class RatesRepository:
-
     def __init__(self):
         self.rates: List[Rate] = []
 

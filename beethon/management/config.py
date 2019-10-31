@@ -8,9 +8,8 @@ from beethon.utils.singleton import MetaSingleton
 
 
 class BeethonConfig(metaclass=MetaSingleton):
-
     def __init__(self):
-        self.__handlers = []    # type: List[Handler]
+        self.__handlers = []  # type: List[Handler]
         self.default_handler_class = DummyHandler
 
     def __iter__(self):
@@ -21,12 +20,14 @@ class BeethonConfig(metaclass=MetaSingleton):
             handler_class = self.default_handler_class
 
         if not issubclass(service_class, Service):
-            raise TypeError('You can register only Service subclasses!')
+            raise TypeError("You can register only Service subclasses!")
         if not issubclass(handler_class, Handler):
-            raise TypeError('You can register only on Handler subclasses!')
+            raise TypeError("You can register only on Handler subclasses!")
 
         handler = handler_class(service=service_class())
 
-        print('Registered service {} with handler {}'.format(service_class, handler_class))
+        print(
+            "Registered service {} with handler {}".format(service_class, handler_class)
+        )
 
         self.__handlers.append(handler)

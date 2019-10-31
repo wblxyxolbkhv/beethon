@@ -19,11 +19,13 @@ class AMQPHandler(Handler):
     By default use 2 queues: for requests and for responses.
     """
 
-    def __init__(self,
-                 service: Service,
-                 amqp_host: str = None,
-                 amqp_user: str = None,
-                 amqp_password: str = None):
+    def __init__(
+        self,
+        service: Service,
+        amqp_host: str = None,
+        amqp_user: str = None,
+        amqp_password: str = None,
+    ):
         super().__init__(service)
 
         host, user, password = self._get_settings()
@@ -44,55 +46,50 @@ class AMQPHandler(Handler):
         self.response_queue: Optional[Queue] = None
 
     def _get_settings(self) -> Tuple[str, str, str]:
-        host = os.environ.get('BEETHON_AMQP_HOST', 'localhost:5672')
-        user = os.environ.get('BEETHON_AMQP_USER', 'guest')
-        password = os.environ.get('BEETHON_AMQP_PASSWORD', 'guest')
+        host = os.environ.get("BEETHON_AMQP_HOST", "localhost:5672")
+        user = os.environ.get("BEETHON_AMQP_USER", "guest")
+        password = os.environ.get("BEETHON_AMQP_PASSWORD", "guest")
 
         return host, user, password
 
     def _get_request_queue_name(self):
-        return '{}-requests'.format(self._service.name)
+        return "{}-requests".format(self._service.name)
 
     def _get_response_queue_name(self):
-        return '{}-responses'.format(self._service.name)
+        return "{}-responses".format(self._service.name)
 
     async def _on_amqp_message(self, msg: IncomingMessage):
         request = Request.parse(msg.body)
         response = await self._on_new_request(request)
         serialized_response = response.serialize()
-        message = Message(body=serialized_response.encode(),
-                          correlation_id=msg.correlation_id)
+        message = Message(
+            body=serialized_response.encode(), correlation_id=msg.correlation_id
+        )
 
         if self.channel is None:
             raise Disconnect()
 
         await self.channel.default_exchange.publish(
-            message=message,
-            routing_key=self._get_response_queue_name()
+            message=message, routing_key=self._get_response_queue_name()
         )
 
     async def run(self):
-        self.connection = await aio_pika.connect_robust(
-            self.amqp_url,
-            loop=self.loop
-        )
+        self.connection = await aio_pika.connect_robust(self.amqp_url, loop=self.loop)
 
         async with self.connection:
             self.channel = await self.connection.channel()
 
             self.request_queue = await self.channel.declare_queue(
-                self._get_request_queue_name(),
-                auto_delete=False
+                self._get_request_queue_name(), auto_delete=False
             )
             self.response_queue = await self.channel.declare_queue(
-                self._get_response_queue_name(),
-                auto_delete=False
+                self._get_response_queue_name(), auto_delete=False
             )
             async with self.request_queue.iterator() as queue_iter:
                 async for message in queue_iter:
                     request_body = json.loads(message.body)
-                    if request_body.get('message_type') != 'request':
-                        print('Handler got and ignore response')
+                    if request_body.get("message_type") != "request":
+                        print("Handler got and ignore response")
                         message.reject(requeue=True)
                         continue
                     async with message.process():

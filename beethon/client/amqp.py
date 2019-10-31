@@ -32,13 +32,15 @@ class AMQPClient(Client):
 
     """
 
-    def __init__(self,
-                 service_name: str,
-                 timeout: int = 10,
-                 loop=None,
-                 amqp_host: str = None,
-                 amqp_user: str = None,
-                 amqp_password: str = None):
+    def __init__(
+        self,
+        service_name: str,
+        timeout: int = 10,
+        loop=None,
+        amqp_host: str = None,
+        amqp_user: str = None,
+        amqp_password: str = None,
+    ):
 
         super().__init__(service_name=service_name)
         self.timeout = timeout
@@ -65,32 +67,27 @@ class AMQPClient(Client):
         self.response_queue: Optional[Queue] = None
 
     def _get_settings(self) -> Tuple[str, str, str]:
-        host = os.environ.get('BEETHON_AMQP_HOST', 'localhost:5672')
-        user = os.environ.get('BEETHON_AMQP_USER', 'guest')
-        password = os.environ.get('BEETHON_AMQP_PASSWORD', 'guest')
+        host = os.environ.get("BEETHON_AMQP_HOST", "localhost:5672")
+        user = os.environ.get("BEETHON_AMQP_USER", "guest")
+        password = os.environ.get("BEETHON_AMQP_PASSWORD", "guest")
 
         return host, user, password
 
     def _get_request_queue_name(self):
-        return '{}-requests'.format(self.service_name)
+        return "{}-requests".format(self.service_name)
 
     def _get_response_queue_name(self):
-        return '{}-responses'.format(self.service_name)
+        return "{}-responses".format(self.service_name)
 
     async def _connect(self):
-        self.connection = await aio_pika.connect_robust(
-            self.amqp_url,
-            loop=self.loop
-        )
+        self.connection = await aio_pika.connect_robust(self.amqp_url, loop=self.loop)
         await self.connection.connect(timeout=self.timeout)
         self.channel = await self.connection.channel()
         self.request_queue = await self.channel.declare_queue(
-            self._get_request_queue_name(),
-            auto_delete=False
+            self._get_request_queue_name(), auto_delete=False
         )
         self.response_queue = await self.channel.declare_queue(
-            self._get_response_queue_name(),
-            auto_delete=False
+            self._get_response_queue_name(), auto_delete=False
         )
 
     async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
@@ -102,8 +99,8 @@ class AMQPClient(Client):
         :return: result of call
         """
         return await asyncio.wait_for(
-            self._call(method_name, *args, **kwargs),
-            timeout=self.timeout)
+            self._call(method_name, *args, **kwargs), timeout=self.timeout
+        )
 
     async def _call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
 
@@ -118,29 +115,30 @@ class AMQPClient(Client):
         message = Message(
             body=request.serialize().encode(),
             correlation_id=correlation_id,
-            expiration=timedelta(seconds=self.timeout)
+            expiration=timedelta(seconds=self.timeout),
         )
         await self.channel.default_exchange.publish(
-            message=message,
-            routing_key=self._get_request_queue_name()
+            message=message, routing_key=self._get_request_queue_name()
         )
 
         async with self.response_queue.iterator() as queue_iter:
             async for msg in queue_iter:
                 response_dict = json.loads(msg.body)
-                if msg.correlation_id != correlation_id or \
-                        response_dict.get('message_type') != 'response':
-                    print('Got and ignored message')
+                if (
+                    msg.correlation_id != correlation_id
+                    or response_dict.get("message_type") != "response"
+                ):
+                    print("Got and ignored message")
                     msg.reject(requeue=True)
                     continue
                 async with msg.process():
                     exc = None
-                    if response_dict.get('exception'):
-                        exc = Exception('')
+                    if response_dict.get("exception"):
+                        exc = Exception("")
                     response = Response(
-                        result=response_dict['result'],
-                        status=int(response_dict['status']),
-                        exception=exc
+                        result=response_dict["result"],
+                        status=int(response_dict["status"]),
+                        exception=exc,
                     )
                     break
 

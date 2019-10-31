@@ -8,16 +8,16 @@ from beethon.messages.base import Request
 
 
 class DummyClient(Client):
-
     async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
 
         for handler in beethon.runner.config:
-            if type(handler) == DummyHandler and handler.get_service().name == self.service_name:
-                response = await handler.send_request(Request(
-                    method_name=method_name,
-                    args=args,
-                    kwargs=kwargs
-                ))
+            if (
+                type(handler) == DummyHandler
+                and handler.get_service().name == self.service_name
+            ):
+                response = await handler.send_request(
+                    Request(method_name=method_name, args=args, kwargs=kwargs)
+                )
                 return self.process_response(response)
 
         raise ThereIsNoSuchService()

@@ -1,7 +1,5 @@
-
-
 class MetaSingleton(type):
-    _instances = {}     # type: ignore
+    _instances = {}  # type: ignore
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:

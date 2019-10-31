@@ -8,7 +8,7 @@ from example.repositories.rates_repository import RatesRepository
 @register(with_handler=AMQPHandler)
 class RatesService(Service):
 
-    name = 'RatesService'
+    name = "RatesService"
 
     def __init__(self):
         self.repo = RatesRepository()

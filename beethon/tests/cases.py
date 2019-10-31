@@ -6,7 +6,6 @@ import beethon
 
 
 class BaseBeethonTestCase:
-
     def setup(self):
         asyncio.ensure_future(beethon.run())
 
