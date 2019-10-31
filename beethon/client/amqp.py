@@ -2,12 +2,14 @@ import asyncio
 import json
 import os
 import uuid
+from datetime import timedelta
 from typing import Optional, Any, Tuple
 
 import aio_pika
 from aio_pika import Message, Queue
 
 from beethon.client.base import Client
+from beethon.exceptions.response_exceptions import CantConnect
 from beethon.messages.base import Request, Response
 
 
@@ -33,6 +35,7 @@ class AMQPClient(Client):
     def __init__(self,
                  service_name: str,
                  timeout: int = 10,
+                 loop=None,
                  amqp_host: str = None,
                  amqp_user: str = None,
                  amqp_password: str = None):
@@ -53,7 +56,10 @@ class AMQPClient(Client):
         self.connection: Optional[aio_pika.Connection] = None
         self.channel: Optional[aio_pika.Channel] = None
 
-        self.loop = asyncio.get_event_loop()
+        if loop is None:
+            self.loop = asyncio.get_event_loop()
+        else:
+            self.loop = loop
 
         self.request_queue: Optional[Queue] = None
         self.response_queue: Optional[Queue] = None
@@ -95,23 +101,35 @@ class AMQPClient(Client):
         :param kwargs: keyword arguments of method
         :return: result of call
         """
-        return await asyncio.wait_for(self._call(method_name, *args, **kwargs), timeout=self.timeout)
+        return await asyncio.wait_for(
+            self._call(method_name, *args, **kwargs),
+            timeout=self.timeout)
 
     async def _call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
 
         if self.connection is None or not await self.connection.ready():
-            self._connect()
+            await self._connect()
+
+        if self.channel is None or self.response_queue is None:
+            raise CantConnect()
 
         request = Request(method_name=method_name, args=args, kwargs=kwargs)
         correlation_id = uuid.uuid4().hex
-        message = Message(body=request.serialize().encode(), correlation_id=correlation_id)
-        await self.channel.default_exchange.publish(message=message, routing_key=self._get_request_queue_name())
+        message = Message(
+            body=request.serialize().encode(),
+            correlation_id=correlation_id,
+            expiration=timedelta(seconds=self.timeout)
+        )
+        await self.channel.default_exchange.publish(
+            message=message,
+            routing_key=self._get_request_queue_name()
+        )
 
-        response = None
         async with self.response_queue.iterator() as queue_iter:
             async for msg in queue_iter:
                 response_dict = json.loads(msg.body)
-                if msg.correlation_id != correlation_id or response_dict.get('message_type') != 'response':
+                if msg.correlation_id != correlation_id or \
+                        response_dict.get('message_type') != 'response':
                     print('Got and ignored message')
                     msg.reject(requeue=True)
                     continue
@@ -129,8 +147,8 @@ class AMQPClient(Client):
             return self.process_response(response)
 
     async def stop(self):
-        if self.connection and self.connection.ready():
-            self.connection.close()
+        if self.connection and await self.connection.ready():
+            await self.connection.close()
 
     async def __aenter__(self):
         await self._connect()

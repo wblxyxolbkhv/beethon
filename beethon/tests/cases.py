@@ -1,10 +1,14 @@
+import asyncio
+
+import pytest
+
 import beethon
 
 
 class BaseBeethonTestCase:
 
-    def setup(self) -> None:
-        beethon.run_async()
+    def setup(self):
+        asyncio.ensure_future(beethon.run())
 
-    def teardown(self) -> None:
+    def teardown(self):
         beethon.stop()

@@ -1,4 +1,4 @@
-from time import sleep
+import asyncio
 
 from beethon.handlers.base import Handler
 from beethon.messages.base import Request
@@ -13,12 +13,12 @@ class DummyHandler(Handler):
         super().__init__(service)
         self.__stop_signal_received = False
 
-    def run(self):
+    async def run(self):
         while not self.__stop_signal_received:
-            sleep(0.5)
+            await asyncio.sleep(0.5)
 
-    def stop(self):
+    async def stop(self):
         self.__stop_signal_received = True
 
-    def send_request(self, request: Request):
-        return self._on_new_request(request)
+    async def send_request(self, request: Request):
+        return await self._on_new_request(request)

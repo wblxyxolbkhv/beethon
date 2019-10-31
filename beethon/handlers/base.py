@@ -31,7 +31,7 @@ class Handler(ABC):
 
         try:
             service_method = getattr(self._service, request.method_name)
-            if service_method is None:
+            if service_method is None or not callable(service_method):
                 raise AttributeError()
             if self.is_async():
                 result = await service_method(*request.args, **request.kwargs)
@@ -48,13 +48,3 @@ class Handler(ABC):
 
     def get_service(self) -> Service:
         return self._service
-
-
-class HandlerRunThread(Thread):
-
-    def __init__(self, handler: Handler):
-        super().__init__(target=handler.run)
-        self.handler = handler
-
-    def stop(self):
-        self.handler.stop()

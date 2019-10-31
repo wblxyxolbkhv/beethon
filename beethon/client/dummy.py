@@ -9,11 +9,11 @@ from beethon.messages.base import Request
 
 class DummyClient(Client):
 
-    def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+    async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
 
         for handler in beethon.runner.config:
             if type(handler) == DummyHandler and handler.get_service().name == self.service_name:
-                response = handler.send_request(Request(
+                response = await handler.send_request(Request(
                     method_name=method_name,
                     args=args,
                     kwargs=kwargs

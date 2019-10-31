@@ -6,6 +6,7 @@ from typing import Tuple, Optional
 import aio_pika
 from aio_pika import IncomingMessage, Message, Queue
 
+from beethon.exceptions.response_exceptions import Disconnect
 from beethon.handlers.base import Handler
 from beethon.messages.base import Request
 from beethon.services.base import Service
@@ -36,7 +37,7 @@ class AMQPHandler(Handler):
         self.amqp_url = "amqp://{}:{}@{}".format(amqp_user, amqp_password, amqp_host)
 
         self.connection: Optional[aio_pika.Connection] = None
-        self.channel: Optional[aio_pika.Channel] = None
+        self.channel: Optional[aio_pika.channel.Channel] = None
         self.loop = asyncio.get_event_loop()
 
         self.request_queue: Optional[Queue] = None
@@ -56,19 +57,19 @@ class AMQPHandler(Handler):
         return '{}-responses'.format(self._service.name)
 
     async def _on_amqp_message(self, msg: IncomingMessage):
-        body_dict = json.loads(msg.body)
-
-        method_name = body_dict['method_name']
-        args = body_dict['args']
-        kwargs = body_dict['kwargs']
-
-        request = Request(method_name=method_name,
-                          args=args,
-                          kwargs=kwargs)
+        request = Request.parse(msg.body)
         response = await self._on_new_request(request)
         serialized_response = response.serialize()
-        message = Message(body=serialized_response.encode(), correlation_id=msg.correlation_id)
-        await self.channel.default_exchange.publish(message=message, routing_key=self._get_response_queue_name())
+        message = Message(body=serialized_response.encode(),
+                          correlation_id=msg.correlation_id)
+
+        if self.channel is None:
+            raise Disconnect()
+
+        await self.channel.default_exchange.publish(
+            message=message,
+            routing_key=self._get_response_queue_name()
+        )
 
     async def run(self):
         self.connection = await aio_pika.connect_robust(

@@ -1,6 +1,5 @@
 from typing import List
 
-from beethon.client.dummy import DummyClient
 from beethon.handlers.dummy import DummyHandler
 from beethon.management.decorators import register
 from beethon.services.base import Service
@@ -16,12 +15,8 @@ class FilmsService(Service):
     def __init__(self):
         self.repository = FilmsRepository()
 
-    def get_all_films(self) -> List[Film]:
+    async def get_all_films(self) -> List[Film]:
         return self.repository.get_all_films()
 
-
-class FilmsServiceInterface:
-
-    def get_all_films(self):
-        client = DummyClient(service_name='FilmsService')
-        return client.call(method_name='get_all_films')
+    async def raising_method(self):
+        raise ValueError('oops')

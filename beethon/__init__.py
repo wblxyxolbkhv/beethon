@@ -1,15 +1,12 @@
-from beethon.management.runer import BeethonRunner, AsyncBeethonRunner
+import asyncio
 
-# runner = BeethonRunner()
+from beethon.management.runer import AsyncBeethonRunner
+
 runner = AsyncBeethonRunner()
 
 
-def run():
-    runner.run()
-
-
-def run_async():
-    runner.run_async()
+async def run():
+    await runner.run()
 
 
 def stop():

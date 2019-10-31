@@ -16,13 +16,6 @@ class BeethonConfig(metaclass=MetaSingleton):
     def __iter__(self):
         return self.__handlers.__iter__()
 
-    def get_service_by_name(self, name: str) -> Service:
-        for handler in self:
-            service = handler.get_service()
-            if name == getattr(type(service), 'name', None):
-                return service
-        raise ThereIsNoSuchService
-
     def register(self, service_class: Type, handler_class: Optional[Type]):
         if handler_class is None:
             handler_class = self.default_handler_class
@@ -33,5 +26,7 @@ class BeethonConfig(metaclass=MetaSingleton):
             raise TypeError('You can register only on Handler subclasses!')
 
         handler = handler_class(service=service_class())
+
+        print('Registered service {} with handler {}'.format(service_class, handler_class))
 
         self.__handlers.append(handler)
