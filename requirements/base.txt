@@ -1,5 +1,7 @@
 aio-pika==6.3.0
+aiohttp==3.6.2
 aiormq==2.9.1
+async-timeout==3.0.1
 idna==2.8
 multidict==4.5.2
 pamqp==2.3.0

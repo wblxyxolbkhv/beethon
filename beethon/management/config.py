@@ -1,6 +1,5 @@
 from typing import List, Type, Optional
 
-from beethon.exceptions.response_exceptions import ThereIsNoSuchService
 from beethon.handlers.base import Handler
 from beethon.handlers.dummy import DummyHandler
 from beethon.services.base import Service
@@ -12,11 +11,15 @@ class BeethonConfig(metaclass=MetaSingleton):
     def __init__(self):
         self.__handlers = []    # type: List[Handler]
         self.default_handler_class = DummyHandler
+        self.default_http_port = 8000
 
     def __iter__(self):
         return self.__handlers.__iter__()
 
-    def register(self, service_class: Type, handler_class: Optional[Type]):
+    def register(self,
+                 service_class: Type,
+                 handler_class: Optional[Type],
+                 **kwargs):
         if handler_class is None:
             handler_class = self.default_handler_class
 
@@ -25,7 +28,7 @@ class BeethonConfig(metaclass=MetaSingleton):
         if not issubclass(handler_class, Handler):
             raise TypeError('You can register only on Handler subclasses!')
 
-        handler = handler_class(service=service_class())
+        handler = handler_class(service=service_class(), **kwargs)
 
         print('Registered service {} with handler {}'.format(service_class, handler_class))
 
