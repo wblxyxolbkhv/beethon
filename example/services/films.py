@@ -10,7 +10,7 @@ from example.repositories.films_repository import FilmsRepository
 @register(with_handler=DummyHandler)
 class FilmsService(Service):
 
-    name = 'FilmsService'
+    name = "FilmsService"
 
     def __init__(self):
         self.repository = FilmsRepository()
@@ -19,4 +19,4 @@ class FilmsService(Service):
         return self.repository.get_all_films()
 
     async def raising_method(self):
-        raise ValueError('oops')
+        raise ValueError("oops")

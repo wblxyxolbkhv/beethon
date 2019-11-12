@@ -9,6 +9,7 @@ class DummyHandler(Handler):
     """
     This handler only available in same project, without publishing
     """
+
     def __init__(self, service: Service):
         super().__init__(service)
         self.__stop_signal_received = False
