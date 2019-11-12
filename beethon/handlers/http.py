@@ -104,7 +104,6 @@ class HTTPHandler(Handler):
         method_name = self._get_method_name(url=request.rel_url.path)
 
         beethon_request = Request(method_name=method_name,
-                                  args=(),
                                   kwargs=kwargs)
         response = StreamResponse()
         try:

@@ -90,19 +90,18 @@ class AMQPClient(Client):
             self._get_response_queue_name(), auto_delete=False
         )
 
-    async def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+    async def call(self, method_name: str, **kwargs) -> Optional[Any]:
         """
         Make async call of remote service method via AMQP
         :param method_name: method name of service
-        :param args: arguments of method
         :param kwargs: keyword arguments of method
         :return: result of call
         """
         return await asyncio.wait_for(
-            self._call(method_name, *args, **kwargs), timeout=self.timeout
+            self._call(method_name, **kwargs), timeout=self.timeout
         )
 
-    async def _call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+    async def _call(self, method_name: str, **kwargs) -> Optional[Any]:
 
         if self.connection is None or not await self.connection.ready():
             await self._connect()
@@ -110,7 +109,7 @@ class AMQPClient(Client):
         if self.channel is None or self.response_queue is None:
             raise CantConnect()
 
-        request = Request(method_name=method_name, args=args, kwargs=kwargs)
+        request = Request(method_name=method_name, kwargs=kwargs)
         correlation_id = uuid.uuid4().hex
         message = Message(
             body=request.serialize().encode(),

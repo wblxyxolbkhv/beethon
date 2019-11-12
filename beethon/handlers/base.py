@@ -37,7 +37,7 @@ class Handler(ABC):
             if service_method is None or not callable(service_method):
                 raise AttributeError()
             if self.is_async():
-                result = await service_method(*request.args, **request.kwargs)
+                result = await service_method(**request.kwargs)
             else:
                 result = service_method(*request.args, **request.kwargs)
         except AttributeError as e:

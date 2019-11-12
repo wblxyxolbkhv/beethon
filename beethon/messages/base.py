@@ -4,9 +4,8 @@ from typing import Any, Optional, Tuple
 
 
 class Request:
-    def __init__(self, method_name: str, args: Tuple[Any, ...], kwargs: dict):
+    def __init__(self, method_name: str, kwargs: dict):
         self.method_name = method_name
-        self.args = args
         self.kwargs = kwargs
         self.message_type = "request"
 
@@ -17,7 +16,6 @@ class Request:
             raise ValueError("Bad request: no method_name field")
         return Request(
             method_name=request_dict["method_name"],
-            args=request_dict.get("args", []),
             kwargs=request_dict.get("kwargs", {}),
         )
 

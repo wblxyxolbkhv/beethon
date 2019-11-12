@@ -10,7 +10,7 @@ class Client(ABC):
         self.service_name = service_name
 
     @abstractmethod
-    def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
+    def call(self, method_name: str, **kwargs) -> Optional[Any]:
         raise NotImplementedError("call() method must be implement in children!")
 
     def process_response(self, response: Response) -> Optional[Any]:

@@ -28,6 +28,7 @@ def route(method: str = None, path: str = None):
     """
 
     def _route_wrapper(service_method):
+        print(type(service_method))
         service: Service = service_method.__self__
         if method is not None:
             service.specify_http_method(service_method.__name__, method)

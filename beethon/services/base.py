@@ -1,12 +1,19 @@
-from typing import Dict, Any, Tuple, Callable
+from typing import Dict, Any, Tuple, Callable, TypeVar
+
+from mypy_extensions import TypedDict
 
 from beethon.utils.singleton import MetaSingleton
+
+
+class MethodAttributes(TypedDict):
+    url: str
+    http_method: str
 
 
 class Service(metaclass=MetaSingleton):
     name = ''
 
-    _methods_attrs: Dict[str:Dict[str:Any]] = {}
+    _methods_attrs: Dict[str, MethodAttributes] = {}
 
     def change_url(self, method_name, new_url):
         method_dict = self._methods_attrs.get(method_name, {})
@@ -24,7 +31,7 @@ class Service(metaclass=MetaSingleton):
         method_dict = self._methods_attrs.get(method_name, {})
         method_dict['http_method'] = http_method
 
-    def __iter__(self) -> Tuple[Callable, Dict[str:Any]]:
+    def __iter__(self) -> Tuple[Callable, Dict[str, MethodAttributes]]:
         """
         Returns all public methods with attrs
         :return: (method, attrs dict)
