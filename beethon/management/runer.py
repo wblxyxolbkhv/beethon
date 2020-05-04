@@ -1,6 +1,5 @@
 import asyncio
 from asyncio import Future
-from contextlib import suppress
 from typing import List
 
 from beethon.management.config import BeethonConfig

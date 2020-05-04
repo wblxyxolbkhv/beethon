@@ -1,4 +1,3 @@
-import http
 from abc import ABC, abstractmethod
 from typing import Optional, Any
 
@@ -11,7 +10,8 @@ class Client(ABC):
 
     @abstractmethod
     def call(self, method_name: str, *args, **kwargs) -> Optional[Any]:
-        raise NotImplementedError("call() method must be implement in children!")
+        raise NotImplementedError("call() method must be "
+                                  "implement in children!")
 
     def process_response(self, response: Response) -> Optional[Any]:
         if response.exception is not None:

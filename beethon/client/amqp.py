@@ -53,7 +53,9 @@ class AMQPClient(Client):
         if amqp_password is None:
             amqp_password = password
 
-        self.amqp_url = "amqp://{}:{}@{}".format(amqp_user, amqp_password, amqp_host)
+        self.amqp_url = "amqp://{}:{}@{}".format(
+            amqp_user, amqp_password, amqp_host
+        )
 
         self.connection: Optional[aio_pika.Connection] = None
         self.channel: Optional[aio_pika.Channel] = None
@@ -80,7 +82,9 @@ class AMQPClient(Client):
         return "{}-responses".format(self.service_name)
 
     async def _connect(self):
-        self.connection = await aio_pika.connect_robust(self.amqp_url, loop=self.loop)
+        self.connection = await aio_pika.connect_robust(
+            self.amqp_url, loop=self.loop
+        )
         await self.connection.connect(timeout=self.timeout)
         self.channel = await self.connection.channel()
         self.request_queue = await self.channel.declare_queue(

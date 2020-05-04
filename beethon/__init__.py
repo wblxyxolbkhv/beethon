@@ -1,5 +1,3 @@
-import asyncio
-
 from beethon.management.runer import AsyncBeethonRunner
 
 runner = AsyncBeethonRunner()

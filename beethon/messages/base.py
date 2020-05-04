@@ -1,6 +1,6 @@
 import http
 import json
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 
 
 class Request:
@@ -11,7 +11,7 @@ class Request:
         self.message_type = "request"
 
     @classmethod
-    def parse(cls, json_request: str) -> "Request":
+    def parse(cls, json_request: Union[str, bytes]) -> "Request":
         request_dict = json.loads(json_request)
         if "method_name" not in request_dict:
             raise ValueError("Bad request: no method_name field")

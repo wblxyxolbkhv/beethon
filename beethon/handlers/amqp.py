@@ -36,7 +36,9 @@ class AMQPHandler(Handler):
         if amqp_password is None:
             amqp_password = password
 
-        self.amqp_url = "amqp://{}:{}@{}".format(amqp_user, amqp_password, amqp_host)
+        self.amqp_url = "amqp://{}:{}@{}".format(
+            amqp_user, amqp_password, amqp_host
+        )
 
         self.connection: Optional[aio_pika.Connection] = None
         self.channel: Optional[aio_pika.channel.Channel] = None
@@ -63,7 +65,8 @@ class AMQPHandler(Handler):
         response = await self._on_new_request(request)
         serialized_response = response.serialize()
         message = Message(
-            body=serialized_response.encode(), correlation_id=msg.correlation_id
+            body=serialized_response.encode(),
+            correlation_id=msg.correlation_id
         )
 
         if self.channel is None:
@@ -74,7 +77,9 @@ class AMQPHandler(Handler):
         )
 
     async def run(self):
-        self.connection = await aio_pika.connect_robust(self.amqp_url, loop=self.loop)
+        self.connection = await aio_pika.connect_robust(
+            self.amqp_url, loop=self.loop
+        )
 
         async with self.connection:
             self.channel = await self.connection.channel()

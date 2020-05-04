@@ -1,7 +1,8 @@
 language: python
 python:
-  - "3.7"
-install:
-  - pip install -r requirements/base.txt -r requirements/dev.txt
-script:
-  - py.test --cov=beethon || flake8 || mypy
+  - "3.8"
+jobs:
+  include:
+    - script: tox -e pytest
+    - script: tox -e mypy
+    - script: tox -e flake8

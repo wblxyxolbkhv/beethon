@@ -8,7 +8,8 @@ class FilmsRepository:
         return [
             Film(
                 name="The Shawshank Redemption",
-                description="Fear can hold you prisoner. Hope can set you free.",
+                description="Fear can hold you prisoner. "
+                            "Hope can set you free.",
                 year=1994,
             ),
             Film(
@@ -18,7 +19,8 @@ class FilmsRepository:
             ),
             Film(
                 name="Rush Hour",
-                description="The fastest hands in the East meet the biggest mouth in the West.",
+                description="The fastest hands in the East meet "
+                            "the biggest mouth in the West.",
                 year=1998,
             ),
         ]

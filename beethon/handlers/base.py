@@ -1,7 +1,6 @@
 import http
 import inspect
 from abc import ABC, abstractmethod
-from threading import Thread
 from typing import Optional
 
 from beethon.messages.base import Request, Response

@@ -1,6 +1,5 @@
 from typing import List, Type, Optional
 
-from beethon.exceptions.response_exceptions import ThereIsNoSuchService
 from beethon.handlers.base import Handler
 from beethon.handlers.dummy import DummyHandler
 from beethon.services.base import Service
@@ -27,7 +26,9 @@ class BeethonConfig(metaclass=MetaSingleton):
         handler = handler_class(service=service_class())
 
         print(
-            "Registered service {} with handler {}".format(service_class, handler_class)
+            "Registered service {} with handler {}".format(
+                service_class,
+                handler_class)
         )
 
         self.__handlers.append(handler)

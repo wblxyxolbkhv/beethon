@@ -17,5 +17,7 @@ class RatesRepository:
         self.rates.append(rate)
 
     def update_rate(self, rate):
-        self.rates = list(filter(lambda r: r.film_id == rate.film_id, self.rates))
+        self.rates = list(
+            filter(lambda r: r.film_id == rate.film_id, self.rates)
+        )
         self.rates.append(rate)
