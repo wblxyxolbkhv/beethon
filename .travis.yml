@@ -1,6 +1,7 @@
 language: python
 python:
   - "3.8"
+install: pip install tox
 jobs:
   include:
     - script: tox -e pytest
