@@ -3,6 +3,7 @@ import pytest
 from beethon.management.decorators import register
 
 
+@pytest.mark.unit
 def test_register_wrong_class():
     with pytest.raises(TypeError):
 
@@ -11,6 +12,7 @@ def test_register_wrong_class():
             pass
 
 
+@pytest.mark.unit
 def test_register_with_wrong_handler():
     with pytest.raises(TypeError):
 

@@ -6,6 +6,7 @@ from beethon.client.dummy import DummyClient
 from beethon.tests.cases import BaseBeethonTestCase
 
 
+@pytest.mark.unit
 class TestDummyService(BaseBeethonTestCase):
     def setup(self) -> None:
         from example.services.films import FilmsService  # noqa

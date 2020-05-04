@@ -4,6 +4,7 @@ python:
 install: pip install tox
 jobs:
   include:
-    - script: tox -e pytest
+    - script: tox -e pytest-unit
+    - script: tox -e pytest-integration
     - script: tox -e mypy
     - script: tox -e flake8
